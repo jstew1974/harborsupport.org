@@ -11,7 +11,7 @@ export default function App() {
   const waitlistNameRef = useRef<HTMLInputElement | null>(null);
 
   const handleRequestAccess = () => {
-    const section = document.getElementById('early-access');
+    const section = document.getElementById('get-started');
     section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     window.setTimeout(() => {
       waitlistNameRef.current?.focus({ preventScroll: true });

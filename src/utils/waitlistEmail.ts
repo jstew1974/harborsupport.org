@@ -39,11 +39,11 @@ export function buildWaitlistEmailPayload(
   const safeRef = stripHeaderNewlines(input.referenceCode).slice(0, 40);
   const safeTime = stripHeaderNewlines(input.submittedAt).slice(0, 60);
 
-  const subject = `Harbor Early Access Request (${safeRef}) — ${safeName}`;
+  const subject = `Harbor Onboarding Request (${safeRef}) — ${safeName}`;
 
   const text = [
-    'New Harbor Early Access Request',
-    '================================',
+    'New Harbor Onboarding Request',
+    '=============================',
     `Reference: ${safeRef}`,
     `Full Name: ${safeName}`,
     `Email: ${safeEmail}`,
@@ -51,13 +51,13 @@ export function buildWaitlistEmailPayload(
     `City / Region: ${safeRegion}`,
     `Submitted At: ${safeTime}`,
     '',
-    'Reply directly to this email to reach the applicant.',
+    'Reply directly to this email to reach the sender.',
   ].join('\n');
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #11222C; max-width: 560px; margin: 0 auto; padding: 24px;">
-      <p style="font-size: 12px; color: #0E5A6D; font-weight: 600; margin: 0 0 8px 0;">HARBOR EARLY ACCESS · ${escapeHtml(safeRef)}</p>
-      <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: #11222C;">New Beta Cohort Request</h2>
+      <p style="font-size: 12px; color: #0E5A6D; font-weight: 600; margin: 0 0 8px 0;">HARBOR SUPPORT · ${escapeHtml(safeRef)}</p>
+      <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 16px 0; color: #11222C;">New Onboarding Request</h2>
       <table style="width: 100%; border-collapse: collapse; font-size: 14px; border: 1px solid #D9E3E8;">
         <tr>
           <td style="padding: 10px 12px; background: #F8FAFB; border-bottom: 1px solid #EEF3F5; color: #4C6270; width: 38%;">Full name</td>

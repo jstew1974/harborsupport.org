@@ -31,8 +31,8 @@ export function Footer() {
             <a href="#outcomes" className="hover:text-[#11222C] transition-colors">
               Outcomes
             </a>
-            <a href="#early-access" className="hover:text-[#11222C] transition-colors">
-              Early Access
+            <a href="#get-started" className="hover:text-[#11222C] transition-colors">
+              Contact
             </a>
           </nav>
         </div>

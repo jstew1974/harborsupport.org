@@ -69,7 +69,7 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
           setErrors(payload.fieldErrors);
         }
         throw new Error(
-          payload.error || 'Unable to submit your early access request.',
+          payload.error || 'Unable to submit your request.',
         );
       }
 
@@ -102,32 +102,32 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
 
   return (
     <section
-      id="early-access"
+      id="get-started"
       className="scroll-mt-16 py-20 sm:py-28 border-t border-[#D9E3E8] bg-[#F8FAFB]"
     >
       <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
           <div className="lg:col-span-5">
             <p className="text-xs font-medium tracking-wide text-[#4C6270] mb-3">
-              Winter 2026 Beta Access
+              Get Started with Harbor
             </p>
             <h2 className="font-display text-3xl sm:text-4xl font-normal tracking-[-0.02em] leading-[1.15] text-[#11222C] text-balance">
-              Reserve your place in Harbor’s next clinical cohort.
+              Start using Harbor for daily support or your care practice.
             </h2>
             <p className="mt-4 text-base leading-[1.65] text-[#425866]">
-              We onboard members in small waves so every participant receives
-              curated local care directories and optional clinician onboarding
-              guides.
+              Share your details below and we’ll send your personalized
+              onboarding guide, curated local care directory, and clinician
+              templates.
             </p>
 
             <dl className="mt-8 pt-6 border-t border-[#D9E3E8] space-y-4 text-sm">
               <div>
                 <dt className="font-semibold text-[#11222C]">
-                  Individual beta access
+                  Individual membership
                 </dt>
                 <dd className="text-[#425866] mt-0.5">
-                  Free during the 8-week Winter cohort, with permanent member
-                  data export.
+                  Open to the public with private daily check-ins, grounding
+                  tools, and permanent member data export.
                 </dd>
               </div>
               <div>
@@ -196,11 +196,10 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
                         Confirmation {confirmation.referenceCode}
                       </p>
                       <h3 className="mt-1 font-display text-2xl font-normal text-[#11222C]">
-                        You’re on the Winter 2026 cohort list,{' '}
-                        {confirmation.fullName}.
+                        We received your request, {confirmation.fullName}.
                       </h3>
                       <p className="mt-2 text-sm leading-relaxed text-[#425866]">
-                        We reserved your invite for{' '}
+                        We’ve sent your details to our team for{' '}
                         <strong className="font-semibold text-[#11222C]">
                           {confirmation.email}
                         </strong>{' '}
@@ -215,7 +214,7 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
 
                   <div className="pt-5 border-t border-[#EEF3F5] flex flex-wrap items-center justify-between gap-4">
                     <span className="text-xs text-[#4C6270]">
-                      Invitations arrive from{' '}
+                      Follow-ups arrive from{' '}
                       <a
                         href="mailto:info@harborsupport.org"
                         className="font-mono text-[#11222C] underline underline-offset-4 decoration-[#D9E3E8] hover:decoration-[#0E5A6D]"
@@ -229,7 +228,7 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
                       onClick={handleReset}
                       className="px-4 py-2 text-xs font-medium text-[#11222C] border border-[#D9E3E8] hover:border-[#0E5A6D] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                     >
-                      Register Another Person
+                      Submit Another Request
                     </button>
                   </div>
                 </div>
@@ -435,7 +434,7 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
                       <p>
                         You can also send your request directly to{' '}
                         <a
-                          href={`mailto:john@harborsupport.org?subject=${encodeURIComponent('Harbor Early Access Request')}`}
+                          href={`mailto:john@harborsupport.org?subject=${encodeURIComponent('Harbor Onboarding Request')}`}
                           className="font-mono text-[#0E5A6D] underline underline-offset-4"
                         >
                           john@harborsupport.org
@@ -457,10 +456,10 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
                             className="w-4 h-4 animate-spin"
                             aria-hidden="true"
                           />
-                          <span>Submitting Request...</span>
+                          <span>Sending Request...</span>
                         </>
                       ) : (
-                        <span>Request Early Access</span>
+                        <span>Get Started</span>
                       )}
                     </button>
 

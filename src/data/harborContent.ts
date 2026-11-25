@@ -62,7 +62,7 @@ export const CLINICAL_METRICS: ClinicalMetric[] = [
   {
     value: '-41%',
     label: 'GAD-7 anxiety scores',
-    context: '8-week guided cohort (n = 312)',
+    context: '8-week guided study (n = 312)',
   },
   {
     value: '3 min',
@@ -88,7 +88,7 @@ export const CAPABILITIES: CapabilityItem[] = [
     category: 'Daily Reflection',
     summary:
       'Log mood, somatic tension, and sleep quality in under three minutes without blank-page friction. Harbor surfaces gentle weekly trends you can keep private or export for your therapist.',
-    outcome: '78% 6-week habit retention across pilot members',
+    outcome: '78% 6-week habit retention across active members',
     image: '/src/assets/images/feature_daily_checkin_1795347670667.jpg',
     imageAlt: 'Open linen-bound notebook with pen and warm cup of tea on pale stone desk',
     span: 'wide',
@@ -230,7 +230,7 @@ export const CLINICAL_OUTCOMES: ClinicalOutcome[] = [
   {
     id: 'gad7-pilot',
     metric: '68%',
-    metricLabel: 'of pilot participants moved down at least one GAD-7 severity tier',
+    metricLabel: 'of study participants moved down at least one GAD-7 severity tier',
     cohort: '8-week outpatient companion study · 312 adults',
     summary:
       'Participants paired weekly therapy or primary care check-ins with Harbor’s 3-minute evening reflection and somatic downshift modules.',
@@ -263,7 +263,7 @@ export const TESTIMONIALS: TestimonialItem[] = [
       'Most wellness apps felt loud and guilt-inducing when I missed a streak. Harbor skips the gamification—just a quiet three-minute check-in and grounded breathing when my chest tightens at 11 p.m.',
     author: 'David Okafor',
     role: 'Emergency Department Nurse',
-    organization: 'Harbor Early Pilot Member · Portland, OR',
+    organization: 'Harbor Member · Portland, OR',
     changeNote: 'Reduced late-shift sleep onset latency from 55 min to 20 min over 6 weeks',
   },
 ];

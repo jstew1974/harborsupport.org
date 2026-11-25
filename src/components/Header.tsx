@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { href: '#approach', label: 'Approach' },
   { href: '#care-finder', label: 'Care Finder' },
   { href: '#outcomes', label: 'Outcomes' },
-  { href: '#early-access', label: 'Early Access' },
+  { href: '#get-started', label: 'Contact' },
 ];
 
 export function Header({ onRequestAccess }: HeaderProps) {
@@ -54,7 +54,7 @@ export function Header({ onRequestAccess }: HeaderProps) {
             onClick={onRequestAccess}
             className="px-5 py-2.5 text-sm font-medium text-white bg-[#0E5A6D] hover:bg-[#0A4655] rounded-lg transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer"
           >
-            Join Early Access
+            Get Started
           </button>
         </div>
 
@@ -98,7 +98,7 @@ export function Header({ onRequestAccess }: HeaderProps) {
               onClick={handleMobileAction}
               className="w-full py-3 px-5 text-sm font-medium text-white bg-[#0E5A6D] hover:bg-[#0A4655] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
             >
-              Join Early Access
+              Get Started
             </button>
           </div>
         </nav>

@@ -36,7 +36,7 @@ async function deliverWaitlistEmail(payload: {
   if (resendApiKey) {
     const fromEmail =
       process.env.RESEND_FROM_EMAIL?.trim() ||
-      'Harbor Early Access <onboarding@resend.dev>';
+      'Harbor Support <onboarding@resend.dev>';
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -88,7 +88,7 @@ async function deliverWaitlistEmail(payload: {
     });
 
     await transporter.sendMail({
-      from: `Harbor Early Access <${smtpUser}>`,
+      from: `Harbor Support <${smtpUser}>`,
       to: toEmail,
       replyTo: payload.replyTo,
       subject: payload.subject,
@@ -106,7 +106,7 @@ async function deliverWaitlistEmail(payload: {
   return {
     delivered: false,
     error:
-      'Early access submissions are temporarily unavailable. Please reach out directly below and we’ll add you to the Winter 2026 cohort.',
+      'Form submissions are temporarily unavailable. Please reach out directly below and our team will help you get started.',
   };
 }
 
@@ -274,7 +274,7 @@ async function createServer() {
     if (!allowWaitlistRequest(clientIp)) {
       res.status(429).json({
         error:
-          'Too many early access requests from this connection. Please wait a few minutes or email john@harborsupport.org directly.',
+          'Too many requests from this connection. Please wait a few minutes or email john@harborsupport.org directly.',
       });
       return;
     }

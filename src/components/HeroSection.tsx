@@ -38,7 +38,7 @@ export function HeroSection({ onRequestAccess }: HeroSectionProps) {
                   onClick={onRequestAccess}
                   className="inline-flex items-center gap-2.5 px-6 py-3.5 text-sm font-medium text-white bg-[#0E5A6D] hover:bg-[#0A4655] rounded-lg transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer"
                 >
-                  <span>Request Early Access</span>
+                  <span>Get Started</span>
                   <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </button>
 
@@ -56,7 +56,7 @@ export function HeroSection({ onRequestAccess }: HeroSectionProps) {
               <span className="hidden sm:inline" aria-hidden="true">·</span>
               <span>HIPAA-aligned encryption</span>
               <span className="hidden sm:inline" aria-hidden="true">·</span>
-              <span>iOS &amp; Android beta Winter 2026</span>
+              <span>Live on iOS, Android &amp; Web</span>
             </div>
           </div>
 
