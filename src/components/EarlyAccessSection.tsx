@@ -30,6 +30,7 @@ const INITIAL_FORM: WaitlistFormInput = {
 
 export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
   const [form, setForm] = useState<WaitlistFormInput>(INITIAL_FORM);
+  const [honeypot, setHoneypot] = useState('');
   const [errors, setErrors] = useState<
     Partial<Record<keyof WaitlistFormInput, string>>
   >({});
@@ -55,7 +56,7 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
       const response = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, website: honeypot }),
       });
 
       const payload = (await response.json()) as Partial<WaitlistConfirmation> & {
@@ -93,6 +94,7 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
 
   const handleReset = () => {
     setForm(INITIAL_FORM);
+    setHoneypot('');
     setErrors({});
     setServerError(null);
     setConfirmation(null);
@@ -233,6 +235,18 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} noValidate className="space-y-5">
+                  <div className="sr-only" aria-hidden="true">
+                    <label htmlFor="waitlist-website">Website</label>
+                    <input
+                      id="waitlist-website"
+                      name="website"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                    />
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label
@@ -413,12 +427,22 @@ export function EarlyAccessSection({ nameInputRef }: EarlyAccessSectionProps) {
                   </div>
 
                   {serverError && (
-                    <p
+                    <div
                       role="alert"
-                      className="text-xs font-medium text-[#9F2D2D]"
+                      className="rounded-lg border border-[#E5C6C6] bg-[#FDF6F6] p-4 space-y-2 text-xs text-[#6E2626]"
                     >
-                      {serverError}
-                    </p>
+                      <p className="font-semibold text-[#8A2424]">{serverError}</p>
+                      <p>
+                        You can also send your request directly to{' '}
+                        <a
+                          href={`mailto:john@harborsupport.org?subject=${encodeURIComponent('Harbor Early Access Request')}`}
+                          className="font-mono text-[#0E5A6D] underline underline-offset-4"
+                        >
+                          john@harborsupport.org
+                        </a>
+                        .
+                      </p>
+                    </div>
                   )}
 
                   <div className="pt-2 flex flex-wrap items-center justify-between gap-4">

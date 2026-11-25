@@ -3,18 +3,112 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import nodemailer from 'nodemailer';
 import { GoogleGenAI } from '@google/genai';
 import {
   extractVerifiedSources,
   validateSearchQuery,
   validateWaitlistForm,
 } from './src/utils/harborLogic.ts';
+import {
+  buildWaitlistEmailPayload,
+  createRateLimiter,
+} from './src/utils/waitlistEmail.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+const DEFAULT_WAITLIST_RECIPIENT = 'john@harborsupport.org';
+const allowWaitlistRequest = createRateLimiter(5, 15 * 60 * 1000);
+
+async function deliverWaitlistEmail(payload: {
+  subject: string;
+  replyTo: string;
+  text: string;
+  html: string;
+}): Promise<{ delivered: boolean; provider?: 'resend' | 'smtp'; error?: string }> {
+  const toEmail =
+    process.env.WAITLIST_TO_EMAIL?.trim() || DEFAULT_WAITLIST_RECIPIENT;
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+
+  if (resendApiKey) {
+    const fromEmail =
+      process.env.RESEND_FROM_EMAIL?.trim() ||
+      'Harbor Early Access <onboarding@resend.dev>';
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [toEmail],
+        reply_to: payload.replyTo,
+        subject: payload.subject,
+        text: payload.text,
+        html: payload.html,
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      console.error(
+        `Resend API returned ${response.status}${detail ? `: ${detail.slice(0, 240)}` : ''}`,
+      );
+      return {
+        delivered: false,
+        provider: 'resend',
+        error:
+          'We could not deliver your request right now. Please try again in a moment or email john@harborsupport.org directly.',
+      };
+    }
+
+    return { delivered: true, provider: 'resend' };
+  }
+
+  const smtpUser = process.env.SMTP_USER?.trim();
+  const smtpPass = process.env.SMTP_PASS?.trim();
+
+  if (smtpUser && smtpPass) {
+    const smtpHost = process.env.SMTP_HOST?.trim() || 'smtp.gmail.com';
+    const smtpPort = Number(process.env.SMTP_PORT) || 465;
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `Harbor Early Access <${smtpUser}>`,
+      to: toEmail,
+      replyTo: payload.replyTo,
+      subject: payload.subject,
+      text: payload.text,
+      html: payload.html,
+    });
+
+    return { delivered: true, provider: 'smtp' };
+  }
+
+  console.warn(
+    'Waitlist email delivery is not configured. Set RESEND_API_KEY (or SMTP_USER and SMTP_PASS) in your hosting environment variables.',
+  );
+
+  return {
+    delivered: false,
+    error:
+      'Early access submissions are temporarily unavailable. Please reach out directly below and we’ll add you to the Winter 2026 cohort.',
+  };
+}
 
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -42,6 +136,7 @@ const SYSTEM_INSTRUCTION = [
 
 async function createServer() {
   const app = express();
+  app.set('trust proxy', 1);
   app.use(express.json({ limit: '64kb' }));
 
   app.post('/api/resources/search', async (req, res) => {
@@ -167,7 +262,23 @@ async function createServer() {
     }
   });
 
-  app.post('/api/waitlist', (req, res) => {
+  app.post('/api/waitlist', async (req, res) => {
+    const honeypot =
+      typeof req.body?.website === 'string' ? req.body.website.trim() : '';
+    if (honeypot.length > 0) {
+      res.status(400).json({ error: 'Invalid submission.' });
+      return;
+    }
+
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!allowWaitlistRequest(clientIp)) {
+      res.status(429).json({
+        error:
+          'Too many early access requests from this connection. Please wait a few minutes or email john@harborsupport.org directly.',
+      });
+      return;
+    }
+
     const input = {
       fullName: typeof req.body?.fullName === 'string' ? req.body.fullName : '',
       email: typeof req.body?.email === 'string' ? req.body.email : '',
@@ -186,14 +297,52 @@ async function createServer() {
     }
 
     const referenceCode = `HBR-${Math.floor(100000 + Math.random() * 900000)}`;
-    res.status(201).json({
+    const submittedAt = new Date().toISOString();
+    const cleanName = input.fullName.trim();
+    const cleanEmail = input.email.trim();
+    const cleanRegion = input.region || null;
+
+    const emailPayload = buildWaitlistEmailPayload({
       referenceCode,
-      fullName: input.fullName.trim(),
-      email: input.email.trim(),
+      fullName: cleanName,
+      email: cleanEmail,
       focusArea: input.focusArea,
-      region: input.region || null,
-      submittedAt: new Date().toISOString(),
+      region: cleanRegion,
+      submittedAt,
     });
+
+    try {
+      const delivery = await deliverWaitlistEmail(emailPayload);
+      if (!delivery.delivered) {
+        res.status(503).json({
+          error:
+            delivery.error ||
+            'Unable to deliver your request right now. Please email john@harborsupport.org directly.',
+        });
+        return;
+      }
+
+      console.log(
+        `Waitlist request ${referenceCode} delivered via ${delivery.provider}`,
+      );
+
+      res.status(201).json({
+        referenceCode,
+        fullName: cleanName,
+        email: cleanEmail,
+        focusArea: input.focusArea,
+        region: cleanRegion,
+        submittedAt,
+      });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Unexpected email delivery error.';
+      console.error(`Waitlist delivery failed for ${referenceCode}:`, message);
+      res.status(502).json({
+        error:
+          'We could not deliver your request right now. Please try again or email john@harborsupport.org directly.',
+      });
+    }
   });
 
   if (!isProduction) {
