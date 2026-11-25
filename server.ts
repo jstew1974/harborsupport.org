@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { GoogleGenAI } from '@google/genai';
 import {
   extractVerifiedSources,
@@ -21,43 +22,79 @@ const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT) || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 const DEFAULT_WAITLIST_RECIPIENT = 'john@harborsupport.org';
+const DEFAULT_RESEND_FROM = 'Harbor Support <info@mail.harborsupport.org>';
 const allowWaitlistRequest = createRateLimiter(5, 15 * 60 * 1000);
 
-async function deliverWaitlistEmail(payload: {
-  subject: string;
-  replyTo: string;
-  text: string;
-  html: string;
-}): Promise<{ delivered: boolean; provider?: 'resend' | 'smtp'; error?: string }> {
+function isRetryableResendError(error: {
+  name?: string;
+  statusCode?: number | null;
+}): boolean {
+  if (typeof error.statusCode === 'number') {
+    return error.statusCode === 429 || error.statusCode >= 500;
+  }
+  return (
+    error.name === 'rate_limit_exceeded' ||
+    error.name === 'internal_server_error' ||
+    error.name === 'application_error'
+  );
+}
+
+async function deliverWaitlistEmail(
+  referenceCode: string,
+  payload: {
+    subject: string;
+    replyTo: string;
+    text: string;
+    html: string;
+  },
+): Promise<{
+  delivered: boolean;
+  provider?: 'resend' | 'smtp';
+  emailId?: string;
+  error?: string;
+}> {
   const toEmail =
     process.env.WAITLIST_TO_EMAIL?.trim() || DEFAULT_WAITLIST_RECIPIENT;
   const resendApiKey = process.env.RESEND_API_KEY?.trim();
 
   if (resendApiKey) {
+    const resend = new Resend(resendApiKey);
     const fromEmail =
-      process.env.RESEND_FROM_EMAIL?.trim() ||
-      'Harbor Support <onboarding@resend.dev>';
+      process.env.RESEND_FROM_EMAIL?.trim() || DEFAULT_RESEND_FROM;
+    const idempotencyKey = `onboarding-request/${referenceCode}`;
+    const maxAttempts = 3;
 
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [toEmail],
-        reply_to: payload.replyTo,
-        subject: payload.subject,
-        text: payload.text,
-        html: payload.html,
-      }),
-    });
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const { data, error } = await resend.emails.send(
+        {
+          from: fromEmail,
+          to: [toEmail],
+          replyTo: payload.replyTo,
+          subject: payload.subject,
+          text: payload.text,
+          html: payload.html,
+          tags: [{ name: 'category', value: 'onboarding' }],
+        },
+        { idempotencyKey },
+      );
 
-    if (!response.ok) {
-      const detail = await response.text().catch(() => '');
+      if (!error && data?.id) {
+        return {
+          delivered: true,
+          provider: 'resend',
+          emailId: data.id,
+        };
+      }
+
+      if (error && isRetryableResendError(error) && attempt < maxAttempts) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 500 * Math.pow(2, attempt - 1)),
+        );
+        continue;
+      }
+
       console.error(
-        `Resend API returned ${response.status}${detail ? `: ${detail.slice(0, 240)}` : ''}`,
+        `Resend delivery failed for ${referenceCode} (${error?.name ?? 'unknown'}): ${error?.message ?? 'No email ID returned'}`,
       );
       return {
         delivered: false,
@@ -66,8 +103,6 @@ async function deliverWaitlistEmail(payload: {
           'We could not deliver your request right now. Please try again in a moment or email john@harborsupport.org directly.',
       };
     }
-
-    return { delivered: true, provider: 'resend' };
   }
 
   const smtpUser = process.env.SMTP_USER?.trim();
@@ -312,7 +347,7 @@ async function createServer() {
     });
 
     try {
-      const delivery = await deliverWaitlistEmail(emailPayload);
+      const delivery = await deliverWaitlistEmail(referenceCode, emailPayload);
       if (!delivery.delivered) {
         res.status(503).json({
           error:
@@ -323,7 +358,7 @@ async function createServer() {
       }
 
       console.log(
-        `Waitlist request ${referenceCode} delivered via ${delivery.provider}`,
+        `Onboarding request ${referenceCode} delivered via ${delivery.provider}${delivery.emailId ? ` (emailId: ${delivery.emailId})` : ''}`,
       );
 
       res.status(201).json({
